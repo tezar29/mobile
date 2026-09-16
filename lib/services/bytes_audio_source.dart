@@ -1,3 +1,7 @@
+// just_audio expose cette API comme expérimentale, mais elle est nécessaire
+// pour lire les octets MP3 reçus du backend sans fichier temporaire.
+// ignore_for_file: experimental_member_use
+
 import 'dart:async';
 import 'dart:typed_data';
 

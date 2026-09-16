@@ -59,7 +59,7 @@ class _HoloGridPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Grille fixe, très discrète.
     final gridPaint = Paint()
-      ..color = AppColors.primaryGlow.withOpacity(0.035)
+      ..color = AppColors.primaryGlow.withValues(alpha: 0.035)
       ..strokeWidth = 1;
 
     const spacing = 32.0;
@@ -75,9 +75,9 @@ class _HoloGridPainter extends CustomPainter {
     final scanPaint = Paint()
       ..shader = LinearGradient(
         colors: [
-          AppColors.primaryGlow.withOpacity(0.0),
-          AppColors.primaryGlow.withOpacity(0.10),
-          AppColors.primaryGlow.withOpacity(0.0),
+          AppColors.primaryGlow.withValues(alpha: 0.0),
+          AppColors.primaryGlow.withValues(alpha: 0.10),
+          AppColors.primaryGlow.withValues(alpha: 0.0),
         ],
       ).createShader(Rect.fromLTWH(0, scanY - 40, size.width, 80));
     canvas.drawRect(Rect.fromLTWH(0, scanY - 40, size.width, 80), scanPaint);

@@ -34,8 +34,11 @@ class ChatSocketService {
   Stream<ChatSocketMessage> get messages => _messagesController.stream;
 
   Future<void> connect() async {
+    await disconnect();
     final token = await _storage.accessToken;
-    final uri = Uri.parse('${AppConfig.wsBaseUrl}/chat/ws?token=${token ?? ''}');
+    final uri = Uri.parse('${AppConfig.wsBaseUrl}/chat/ws').replace(
+      queryParameters: {'token': token ?? ''},
+    );
 
     _channel = WebSocketChannel.connect(uri);
     _channel!.stream.listen(
@@ -46,17 +49,21 @@ class ChatSocketService {
   }
 
   void _handleMessage(dynamic raw) {
-    final message = jsonDecode(raw as String) as Map<String, dynamic>;
+    try {
+      final message = jsonDecode(raw as String) as Map<String, dynamic>;
 
-    switch (message['type']) {
-      case 'assistant_message':
-        _messagesController.add(
-          ChatSocketMessage.assistant(message['text'] as String, message['agent'] as String?),
-        );
-        break;
-      case 'error':
-        _messagesController.add(ChatSocketMessage.error(message['detail'] as String? ?? 'Erreur inconnue'));
-        break;
+      switch (message['type']) {
+        case 'assistant_message':
+          _messagesController.add(
+            ChatSocketMessage.assistant(message['text'] as String, message['agent'] as String?),
+          );
+          break;
+        case 'error':
+          _messagesController.add(ChatSocketMessage.error(message['detail'] as String? ?? 'Erreur inconnue'));
+          break;
+      }
+    } catch (error) {
+      _messagesController.add(ChatSocketMessage.error('Réponse serveur invalide : $error'));
     }
   }
 

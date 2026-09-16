@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,11 +15,15 @@ import '../../screens/vision/vision_screen.dart';
 /// d'accès : un utilisateur non authentifié ne peut jamais atteindre
 /// les écrans protégés, quelle que soit l'URL demandée.
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  // refreshListenable est requis pour avertir GoRouter de reconstruire et réévaluer
+  // les redirections quand l'état d'authentification change.
+  final notifier = ref.watch(authStateProvider.notifier);
 
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: _StateNotifierListenable(notifier),
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
       final loggedIn = authState.status == AuthStatus.authenticated;
       final loggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/register';
 
@@ -38,3 +43,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Permet de convertir un StateNotifier Riverpod en Listenable pour GoRouter
+class _StateNotifierListenable extends ChangeNotifier {
+  _StateNotifierListenable(StateNotifier notifier) {
+    notifier.addListener((_) => notifyListeners());
+  }
+}

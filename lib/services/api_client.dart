@@ -17,9 +17,12 @@ class ApiClient {
           handler.next(options);
         },
         onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
+          final alreadyRetried = error.requestOptions.extra['authRetry'] == true;
+          final isRefreshRequest = error.requestOptions.path.endsWith('/auth/refresh');
+          if (error.response?.statusCode == 401 && !alreadyRetried && !isRefreshRequest) {
             final refreshed = await _tryRefresh();
             if (refreshed) {
+              error.requestOptions.extra['authRetry'] = true;
               final retryResponse = await dio.fetch(error.requestOptions);
               return handler.resolve(retryResponse);
             }

@@ -10,9 +10,13 @@ class AuthState {
 
   final AuthStatus status;
   final String? errorMessage;
+  static const Object _unset = Object();
 
-  AuthState copyWith({AuthStatus? status, String? errorMessage}) {
-    return AuthState(status: status ?? this.status, errorMessage: errorMessage);
+  AuthState copyWith({AuthStatus? status, Object? errorMessage = _unset}) {
+    return AuthState(
+      status: status ?? this.status,
+      errorMessage: identical(errorMessage, _unset) ? this.errorMessage : errorMessage as String?,
+    );
   }
 }
 

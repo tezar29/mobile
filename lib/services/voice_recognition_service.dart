@@ -20,14 +20,25 @@ class VoiceRecognitionService {
 
   final stt.SpeechToText _speech;
   bool _isInitialized = false;
+  bool _wakeWordListening = false;
+  String _wakeLocale = 'fr_FR';
+  void Function()? _onWakeWordDetected;
 
   Future<bool> init() async {
-    final micStatus = await Permission.microphone.request();
-    if (!micStatus.isGranted) return false;
+    var micStatus = await Permission.microphone.status;
+    if (!micStatus.isGranted) {
+      micStatus = await Permission.microphone.request();
+    }
+    if (!micStatus.isGranted) {
+      _lastError = micStatus.isPermanentlyDenied
+          ? 'Accès au micro bloqué. Autorisez le micro dans les réglages de l’application.'
+          : 'Autorisation du micro refusée.';
+      return false;
+    }
 
     _isInitialized = await _speech.initialize(
       onError: (error) => _lastError = error.errorMsg,
-      onStatus: (_) {},
+      onStatus: _handleStatus,
     );
     return _isInitialized;
   }
@@ -46,14 +57,29 @@ class VoiceRecognitionService {
   }) async {
     if (!_isInitialized) return;
 
+    _wakeWordListening = true;
+    _wakeLocale = localeId;
+    _onWakeWordDetected = onWakeWordDetected;
+    await _listenForWakeWord();
+  }
+
+  Future<void> _listenForWakeWord() async {
+    if (!_isInitialized || !_wakeWordListening || _speech.isListening) return;
+
     await _speech.listen(
-      localeId: localeId,
-      listenOptions: stt.SpeechListenOptions(partialResults: true, cancelOnError: false),
+      listenOptions: stt.SpeechListenOptions(
+        localeId: _wakeLocale,
+        partialResults: true,
+        cancelOnError: false,
+      ),
       onResult: (result) {
         final heard = result.recognizedWords.toLowerCase();
         if (heard.contains(AppConfig.wakeWord)) {
+          _wakeWordListening = false;
           _speech.stop();
-          onWakeWordDetected();
+          final callback = _onWakeWordDetected;
+          _onWakeWordDetected = null;
+          callback?.call();
         }
       },
     );
@@ -69,11 +95,16 @@ class VoiceRecognitionService {
   }) async {
     if (!_isInitialized) return;
 
+    _wakeWordListening = false;
+    _onWakeWordDetected = null;
+    await _speech.stop();
+
+    var finalResultDelivered = false;
     await _speech.listen(
-      localeId: localeId,
-      listenOptions: stt.SpeechListenOptions(partialResults: true),
+      listenOptions: stt.SpeechListenOptions(localeId: localeId, partialResults: true),
       onResult: (result) {
-        if (result.finalResult) {
+        if (result.finalResult && !finalResultDelivered) {
+          finalResultDelivered = true;
           onFinalResult(result.recognizedWords);
         } else {
           onPartialResult?.call(result.recognizedWords);
@@ -82,7 +113,20 @@ class VoiceRecognitionService {
     );
   }
 
-  Future<void> stop() => _speech.stop();
+  void _handleStatus(String status) {
+    if (!_wakeWordListening || (status != 'done' && status != 'notListening')) return;
+    Future<void>.delayed(const Duration(milliseconds: 250), _listenForWakeWord);
+  }
 
-  Future<void> cancel() => _speech.cancel();
+  Future<void> stop() async {
+    _wakeWordListening = false;
+    _onWakeWordDetected = null;
+    await _speech.stop();
+  }
+
+  Future<void> cancel() async {
+    _wakeWordListening = false;
+    _onWakeWordDetected = null;
+    await _speech.cancel();
+  }
 }

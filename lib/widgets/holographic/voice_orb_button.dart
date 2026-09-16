@@ -99,7 +99,7 @@ class VoiceOrbButton extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(colors: [color.withOpacity(0.55), color.withOpacity(0.05)]),
+        gradient: RadialGradient(colors: [color.withValues(alpha: 0.55), color.withValues(alpha: 0.05)]),
         border: Border.all(color: color, width: 2),
       ),
       child: Icon(_icon, color: color, size: size * 0.4),

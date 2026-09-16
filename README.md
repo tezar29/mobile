@@ -14,10 +14,10 @@ Pour le build de release (Android/iOS) et la checklist de soumission aux stores,
 - Écrans : Splash, Login, Register, Home (orbe vocal central — visuel uniquement pour l'instant), Chat (squelette UI)
 - Widgets holographiques réutilisables : `GlowContainer`, `VoiceOrbButton`
 
-## Important : dossiers natifs android/ios
+## Important : dossiers natifs Android/iOS
 
-Cette livraison contient uniquement le code Dart (`lib/`), `pubspec.yaml` et la config d'analyse —
-pas les dossiers natifs `android/` et `ios/` générés par l'outil `flutter`. Pour les créer :
+Le projet contient actuellement le dossier natif Android, avec les permissions micro et caméra
+déjà déclarées. Le dossier iOS n'est pas encore généré dans ce dépôt. Pour ajouter iOS :
 
 ```bash
 cd mobile
@@ -52,16 +52,18 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
   Jarvis répond → coupe l'audio et annule le tour en cours côté backend).
 - L'orbe de `HomeScreen` est maintenant branché sur ce cycle réel (plus un simple effet visuel).
 
-### Permissions natives à ajouter après `flutter create .`
+### Permissions natives
 
 **Android** (`android/app/src/main/AndroidManifest.xml`) :
+
+Ces permissions sont déjà présentes dans le projet :
 ```xml
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.CAMERA" />
 ```
 
-**iOS** (`ios/Runner/Info.plist`) :
+Après génération d'iOS, ajouter dans `ios/Runner/Info.plist` :
 ```xml
 <key>NSMicrophoneUsageDescription</key>
 <string>Jarvis a besoin du micro pour vous écouter.</string>

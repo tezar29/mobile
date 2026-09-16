@@ -15,12 +15,13 @@ class ChatState {
   final List<ChatMessageItem> messages;
   final bool connected;
   final String? errorMessage;
+  static const Object _unset = Object();
 
-  ChatState copyWith({List<ChatMessageItem>? messages, bool? connected, String? errorMessage}) {
+  ChatState copyWith({List<ChatMessageItem>? messages, bool? connected, Object? errorMessage = _unset}) {
     return ChatState(
       messages: messages ?? this.messages,
       connected: connected ?? this.connected,
-      errorMessage: errorMessage,
+      errorMessage: identical(errorMessage, _unset) ? this.errorMessage : errorMessage as String?,
     );
   }
 }
@@ -37,8 +38,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
   final ChatSocketService _socket;
 
   Future<void> connect() async {
-    await _socket.connect();
-    state = state.copyWith(connected: true);
+    try {
+      await _socket.connect();
+      state = state.copyWith(connected: true, errorMessage: null);
+    } catch (error) {
+      state = state.copyWith(connected: false, errorMessage: 'Connexion au chat impossible : $error');
+    }
   }
 
   void sendMessage(String text) {

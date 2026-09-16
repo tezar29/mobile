@@ -142,7 +142,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   GlowContainer(glowIntensity: 0.3, child: Text(voiceState.responseText)),
                 ],
                 const SizedBox(height: 28),
-                _QuickActionsRow(),
+                const _QuickActionsRow(),
                 const SizedBox(height: 24),
                 _RemindersPanel(reminders: _reminders, loading: _loadingReminders),
               ],
@@ -226,8 +226,8 @@ class _RemindersPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.notifications_none_rounded, color: AppColors.primaryGlow, size: 18),
               SizedBox(width: 8),
               Text('Prochaines échéances', style: TextStyle(fontWeight: FontWeight.w600)),

@@ -20,8 +20,11 @@ class VoiceSocketService {
   Stream<VoiceSocketEvent> get events => _eventsController.stream;
 
   Future<void> connect() async {
+    await disconnect();
     final token = await _storage.accessToken;
-    final uri = Uri.parse('${AppConfig.wsBaseUrl}/voice/ws?token=${token ?? ''}');
+    final uri = Uri.parse('${AppConfig.wsBaseUrl}/voice/ws').replace(
+      queryParameters: {'token': token ?? ''},
+    );
 
     _channel = WebSocketChannel.connect(uri);
     _channel!.stream.listen(
@@ -32,25 +35,29 @@ class VoiceSocketService {
   }
 
   void _handleMessage(dynamic raw) {
-    final message = jsonDecode(raw as String) as Map<String, dynamic>;
+    try {
+      final message = jsonDecode(raw as String) as Map<String, dynamic>;
 
-    switch (message['type']) {
-      case 'assistant_text':
-        _eventsController.add(VoiceSocketEvent.assistantText(message['text'] as String));
-        break;
-      case 'assistant_audio':
-        final bytes = base64Decode(message['audio_base64'] as String);
-        _eventsController.add(VoiceSocketEvent.assistantAudio(bytes));
-        break;
-      case 'assistant_audio_unavailable':
-        _eventsController.add(VoiceSocketEvent.audioUnavailable());
-        break;
-      case 'cancelled':
-        _eventsController.add(VoiceSocketEvent.cancelled());
-        break;
-      case 'error':
-        _eventsController.add(VoiceSocketEvent.error(message['detail'] as String? ?? 'Erreur inconnue'));
-        break;
+      switch (message['type']) {
+        case 'assistant_text':
+          _eventsController.add(VoiceSocketEvent.assistantText(message['text'] as String));
+          break;
+        case 'assistant_audio':
+          final bytes = base64Decode(message['audio_base64'] as String);
+          _eventsController.add(VoiceSocketEvent.assistantAudio(bytes));
+          break;
+        case 'assistant_audio_unavailable':
+          _eventsController.add(VoiceSocketEvent.audioUnavailable());
+          break;
+        case 'cancelled':
+          _eventsController.add(VoiceSocketEvent.cancelled());
+          break;
+        case 'error':
+          _eventsController.add(VoiceSocketEvent.error(message['detail'] as String? ?? 'Erreur inconnue'));
+          break;
+      }
+    } catch (error) {
+      _eventsController.add(VoiceSocketEvent.error('Réponse vocale invalide : $error'));
     }
   }
 

@@ -25,17 +25,19 @@ class VoiceState {
   final String responseText;
   final String? errorMessage;
 
+  static const Object _unset = Object();
+
   VoiceState copyWith({
     VoiceStatus? status,
     String? transcript,
     String? responseText,
-    String? errorMessage,
+    Object? errorMessage = _unset,
   }) {
     return VoiceState(
       status: status ?? this.status,
       transcript: transcript ?? this.transcript,
       responseText: responseText ?? this.responseText,
-      errorMessage: errorMessage,
+      errorMessage: identical(errorMessage, _unset) ? this.errorMessage : errorMessage as String?,
     );
   }
 }
@@ -60,13 +62,20 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
   /// puis démarre l'écoute passive du mot-clé.
   Future<void> activate({String language = 'fr_FR'}) async {
     _language = language;
-    final ready = await _recognition.init();
-    if (!ready) {
-      state = state.copyWith(status: VoiceStatus.error, errorMessage: 'Permission micro refusée.');
-      return;
+    try {
+      final ready = await _recognition.init();
+      if (!ready) {
+        state = state.copyWith(
+          status: VoiceStatus.error,
+          errorMessage: _recognition.lastError ?? 'Impossible d’accéder au micro.',
+        );
+        return;
+      }
+      await _socket.connect();
+      await _listenForWakeWord();
+    } catch (error) {
+      state = state.copyWith(status: VoiceStatus.error, errorMessage: 'Connexion vocale impossible : $error');
     }
-    await _socket.connect();
-    await _listenForWakeWord();
   }
 
   Future<void> _listenForWakeWord() async {
@@ -138,7 +147,7 @@ class VoiceNotifier extends StateNotifier<VoiceState> {
     await _recognition.cancel();
     await _player.stop();
     await _localTts.stop();
-    state = state.copyWith(status: VoiceStatus.idle);
+    state = state.copyWith(status: VoiceStatus.idle, errorMessage: null);
   }
 
   Future<void> deactivate() async {

@@ -26,7 +26,7 @@ class GlowContainer extends StatelessWidget {
         gradient: AppColors.holoBorder,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryGlow.withOpacity(glowIntensity),
+            color: AppColors.primaryGlow.withValues(alpha: glowIntensity),
             blurRadius: 20,
             spreadRadius: -4,
           ),

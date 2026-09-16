@@ -33,6 +33,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _loadStatus() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -40,11 +41,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       final service = IntegrationsService(ref.read(apiClientProvider));
       final status = await service.getStatus();
-      setState(() => _status = status);
+      if (mounted) setState(() => _status = status);
     } catch (_) {
-      setState(() => _error = "Impossible de charger l'état des intégrations.");
+      if (mounted) setState(() => _error = "Impossible de charger l'état des intégrations.");
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

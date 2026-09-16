@@ -48,14 +48,18 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
   String? _errorText;
 
   Future<void> _pickImage(ImageSource source) async {
-    final picked = await _picker.pickImage(source: source, imageQuality: 85);
-    if (picked == null) return;
+    try {
+      final picked = await _picker.pickImage(source: source, imageQuality: 85);
+      if (picked == null || !mounted) return;
 
-    setState(() {
-      _selectedImage = File(picked.path);
-      _resultText = null;
-      _errorText = null;
-    });
+      setState(() {
+        _selectedImage = File(picked.path);
+        _resultText = null;
+        _errorText = null;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _errorText = 'Impossible d’accéder à la caméra ou à la galerie.');
+    }
   }
 
   Future<void> _analyze() async {
@@ -73,11 +77,11 @@ class _VisionScreenState extends ConsumerState<VisionScreen> {
         mode: _mode.apiValue,
         question: _questionController.text.trim().isEmpty ? null : _questionController.text.trim(),
       );
-      setState(() => _resultText = result.text);
+      if (mounted) setState(() => _resultText = result.text);
     } catch (e) {
-      setState(() => _errorText = "Échec de l'analyse — vérifie ta connexion et réessaie.");
+      if (mounted) setState(() => _errorText = "Échec de l'analyse — vérifie ta connexion et réessaie.");
     } finally {
-      setState(() => _analyzing = false);
+      if (mounted) setState(() => _analyzing = false);
     }
   }
 
